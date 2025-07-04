@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>尊驾驿站收银管理系统</title>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary: #1a5fb4;
+            --secondary: #2ec27e;
+            --accent: #a51e2d;
+            --light: #f6f5f4;
+            --dark: #241f31;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #e0f0ff, #f5f9ff);
+            color: var(--dark);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: linear-gradient(120deg, var(--primary), #0d3e7a);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 12px 12px 0 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo {
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 24px;
+            color: var(--primary);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        .date-display {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 10px rgba(26, 95, 180, 0.3);
+        }
+        
+        .btn-primary:hover {
+            background: #0d4a94;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+            box-shadow: 0 4px 10px rgba(46, 194, 126, 0.3);
+        }
+        
+        .btn-secondary:hover {
+            background: #25a86d;
+            transform: translateY(-2px);
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .tab {
+            padding: 12px 25px;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .tab:hover:not(.active) {
+            background: #f0f7ff;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1000px;
+        }
+        
+        th {
+            background: linear-gradient(to bottom, #f0f5ff, #e0ebff);
+            padding: 16px 15px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--primary);
+            border-bottom: 2px solid #d0ddf5;
+            position: sticky;
+            top: 0;
+        }
+        
+        td {
+            padding: 14px 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        tr:hover td {
+            background-color: #f8fbff;
+        }
+        
+        .highlight {
+            background-color: #fff9e6 !important;
+            font-weight: 500;
+        }
+        
+        .summary-row td {
+            background-color: #f0f9ff;
+            font-weight: 600;
+        }
+        
+        .table-title {
+            padding: 18px 25px;
+            background: linear-gradient(to right, var(--primary), #2a76d0);
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .table-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .table-actions button {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 13px;
+        }
+        
+        .table-actions button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .instructions {
+            background: #fff8e1;
+            border-left: 4px solid #ffc107;
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 25px 0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .instructions h3 {
+            margin-bottom: 8px;
+            color: #d18f00;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 5px;
+        }
+        
+        .system-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .info-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        
+        .info-card h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .info-card h3 i {
+            font-size: 20px;
+        }
+        
+        .info-card p {
+            line-height: 1.6;
+            color: #555;
+        }
+        
+        .key-points {
+            margin-top: 15px;
+        }
+        
+        .key-points li {
+            padding: 8px 0;
+            border-bottom: 1px dashed #eee;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 25px 0;
+            color: #666;
+            font-size: 14px;
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+            }
+            
+            .tabs {
+                overflow-x: auto;
+                padding-bottom: 10px;
+            }
+            
+            header {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+            
+            .logo-container {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <div class="logo">尊</div>
+                <h1>尊驾驿站收银管理系统</h1>
+            </div>
+            <div class="date-display" id="currentDate">2025年7月4日 星期五</div>
+        </header>
+        
+        <div class="controls">
+            <button class="btn btn-primary" id="downloadBtn">
+                <i class="icon">📊</i> 下载Excel报表
+            </button>
+            <button class="btn btn-secondary" id="newRecordBtn">
+                <i class="icon">➕</i> 新建收银记录
+            </button>
+        </div>
+        
+        <div class="tabs" id="tabsContainer">
+            <!-- Tabs will be generated by JavaScript -->
+        </div>
+        
+        <div class="instructions">
+            <h3>收银管理流程要点</h3>
+            <ul>
+                <li><strong>日清日结：</strong>当日收款当日结清，确保账实相符</li>
+                <li><strong>双人复核：</strong>关键操作需双人复核，降低差错风险</li>
+                <li><strong>凭证完整：</strong>所有交易保留完整凭证，确保可追溯</li>
+                <li><strong>渠道区分：</strong>清晰区分不同销售渠道的收入与提成</li>
+            </ul>
+        </div>
+        
+        <div class="table-container">
+            <div class="table-title">
+                <span>洗车包销售登记表</span>
+                <div class="table-actions">
+                    <button>添加记录</button>
+                    <button>导出</button>
+                </div>
+            </div>
+            <table id="salesTable">
+                <thead>
+                    <tr>
+                        <th>序号</th>
+                        <th>销售日期</th>
+                        <th>洗车包类型</th>
+                        <th>客户姓名</th>
+                        <th>联系电话</th>
+                        <th>车牌号</th>
+                        <th>销售渠道</th>
+                        <th>销售金额</th>
+                        <th>实体卡号</th>
+                        <th>优惠券报送</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>2025-07-15 08:00</td>
+                        <td>洗车包A</td>
+                        <td>张先生</td>
+                        <td>138****1234</td>
+                        <td>粤A12345</td>
+                        <td>尊驾驿站门店</td>
+                        <td>108元</td>
+                        <td>JC20250715001</td>
+                        <td>已报送</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>2025-07-15 10:30</td>
+                        <td>洗车包B</td>
+                        <td>李女士</td>
+                        <td>139****5678</td>
+                        <td>粤B56789</td>
+                        <td>公众号销售</td>
+                        <td>200元</td>
+                        <td>JC20250715002</td>
+                        <td>已报送</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>2025-07-15 14:20</td>
+                        <td>洗车包A</td>
+                        <td>王先生</td>
+                        <td>137****9012</td>
+                        <td>粤C78901</td>
+                        <td>金福能源站</td>
+                        <td>108元</td>
+                        <td>JC20250715003</td>
+                        <td>已报送</td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td>2025-07-15 16:45</td>
+                        <td>洗车包B</td>
+                        <td>赵先生</td>
+                        <td>135****3456</td>
+                        <td>粤D34567</td>
+                        <td>尊驾驿站门店</td>
+                        <td>200元</td>
+                        <td>JC20250715004</td>
+                        <td>已报送</td>
+                    </tr>
+                    <tr class="summary-row">
+                        <td colspan="7" style="text-align: right;">当日合计：</td>
+                        <td>616元</td>
+                        <td colspan="2">4份</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="system-info">
+            <div class="info-card">
+                <h3><i>📋</i> 洗车包销售提成</h3>
+                <p>根据销售渠道和洗车包类型计算提成：</p>
+                <ul class="key-points">
+                    <li><strong>洗车包A：</strong>5元/份</li>
+                    <li><strong>洗车包B：</strong>8元/份</li>
+                    <li><strong>尊驾驿站门店：</strong>随工资发放</li>
+                    <li><strong>金福能源站：</strong>次月报销分配</li>
+                    <li><strong>市场部：</strong>0.5元/份，次月工资发放</li>
+                </ul>
+            </div>
+            
+            <div class="info-card">
+                <h3><i>⏱️</i> 时间节点要求</h3>
+                <p>严格遵守以下时间节点：</p>
+                <ul class="key-points">
+                    <li><strong>优惠券信息：</strong>每日19:00前报送市场部</li>
+                    <li><strong>日结工作：</strong>每日21:00前完成</li>
+                    <li><strong>提成报表：</strong>每月3日前提交加管部</li>
+                    <li><strong>提成发放：</strong>次月10日前完成</li>
+                </ul>
+            </div>
+            
+            <div class="info-card">
+                <h3><i>🔐</i> 财务安全措施</h3>
+                <p>确保资金安全和账目准确：</p>
+                <ul class="key-points">
+                    <li>所有现金收入双人清点</li>
+                    <li>每日系统对账，确保账实相符</li>
+                    <li>优惠券必须通过系统核销</li>
+                    <li>禁止手工修改或口头承诺优惠</li>
+                    <li>所有交易保留完整凭证</li>
+                </ul>
+            </div>
+        </div>
+        
+        <footer>
+            <p>尊驾驿站财务管理系统 © 2025 | 当前版本：v2.1.5 | 最后更新：2025-07-04</p>
+            <p>系统操作咨询请联系：刘经理 138-XXXX-XXXX | 技术支持：信息部 分机 802</p>
+        </footer>
+    </div>
+
+    <script>
+        // 设置当前日期
+        const now = new Date();
+        const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+        document.getElementById('currentDate').textContent = now.toLocaleDateString('zh-CN', options);
+        
+        // 生成标签页
+        const tabs = [
+            '洗车包销售登记', 
+            '香薰消毒服务', 
+            '赠品领取登记', 
+            '收银日报', 
+            '提成计算', 
+            '现金缴款',
+            '精洗卡兑换',
+            '系统设置'
+        ];
+        
+        const tabsContainer = document.getElementById('tabsContainer');
+        tabs.forEach((tab, index) => {
+            const tabElement = document.createElement('div');
+            tabElement.className = 'tab' + (index === 0 ? ' active' : '');
+            tabElement.textContent = tab;
+            tabElement.onclick = () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tabElement.classList.add('active');
+            };
+            tabsContainer.appendChild(tabElement);
+        });
+        
+        // 下载Excel功能
+        document.getElementById('downloadBtn').addEventListener('click', function() {
+            // 创建虚拟表格数据
+            const wb = XLSX.utils.book_new();
+            
+            // 添加洗车包销售登记表
+            const salesData = [
+                ['序号', '销售日期', '洗车包类型', '客户姓名', '联系电话', '车牌号', '销售渠道', '销售金额', '实体卡号', '优惠券报送'],
+                [1, '2025-07-15 08:00', '洗车包A', '张先生', '138****1234', '粤A12345', '尊驾驿站门店', '108元', 'JC20250715001', '已报送'],
+                [2, '2025-07-15 10:30', '洗车包B', '李女士', '139****5678', '粤B56789', '公众号销售', '200元', 'JC20250715002', '已报送'],
+                [3, '2025-07-15 14:20', '洗车包A', '王先生', '137****9012', '粤C78901', '金福能源站', '108元', 'JC20250715003', '已报送'],
+                [4, '2025-07-15 16:45', '洗车包B', '赵先生', '135****3456', '粤D34567', '尊驾驿站门店', '200元', 'JC20250715004', '已报送']
+            ];
+            
+            const ws = XLSX.utils.aoa_to_sheet(salesData);
+            XLSX.utils.book_append_sheet(wb, ws, "洗车包销售登记表");
+            
+            // 添加收银日报表
+            const dailyData = [
+                ['日期', '轿车洗车', 'SUV洗车', '小计', '洗车包A', '洗车包B', '消毒服务', '现金收入', '移动支付', '刷卡收入', '合计', '收银员'],
+                ['2025-07-15', '320元 (16辆)', '250元 (10辆)', '570元', '324元 (3份)', '400元 (2份)', '90元 (3次)', '450元', '650元', '284元', '1,384元', '张收银'],
+                ['2025-07-16', '400元 (20辆)', '300元 (12辆)', '700元', '216元 (2份)', '600元 (3份)', '120元 (4次)', '520元', '780元', '336元', '1,636元', '李收银'],
+                ['2025-07-17', '360元 (18辆)', '225元 (9辆)', '585元', '324元 (3份)', '400元 (2份)', '90元 (3次)', '480元', '710元', '209元', '1,399元', '王收银']
+            ];
+            
+            const ws2 = XLSX.utils.aoa_to_sheet(dailyData);
+            XLSX.utils.book_append_sheet(wb, ws2, "收银日报表");
+            
+            // 导出Excel
+            XLSX.writeFile(wb, "尊驾驿站收银报表_" + now.getFullYear() + (now.getMonth()+1) + now.getDate() + ".xlsx");
+            
+            // 显示下载成功提示
+            alert('Excel报表已生成并开始下载！');
+        });
+        
+        // 新建记录按钮
+        document.getElementById('newRecordBtn').addEventListener('click', function() {
+            alert('打开新建收银记录表单...');
+        });
+        
+        // 表格行悬停效果
+        const tableRows = document.querySelectorAll('tbody tr');
+        tableRows.forEach(row => {
+            row.addEventListener('mouseenter', () => {
+                row.classList.add('highlight');
+            });
+            
+            row.addEventListener('mouseleave', () => {
+                row.classList.remove('highlight');
+            });
+        });
+    </script>
+</body>
+</html>
